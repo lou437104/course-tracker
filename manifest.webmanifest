@@ -1,0 +1,11 @@
+{
+  "name": "Course Accountability Tracker",
+  "short_name": "CourseTracker",
+  "description": "Track courses, stay accountable, and hit your completion dates.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#0b1220",
+  "icons": []
+}
+
