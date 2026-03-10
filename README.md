@@ -27,6 +27,7 @@ Option B:
   - Reminder method checkboxes (email/SMS/push/Slack/Discord)
   - Reminder time picker + weekends toggle
   - Progress logging method dropdown
+  - Optional **OpenAI API key** field (auto-generate the daily coach message)
   - A motivating **Start Tracking** button (orange)
 - **Courses**
   - Add / edit / delete courses
@@ -35,6 +36,12 @@ Option B:
   - Progress as **percent** or **module X of Y**
   - Progress bar + pacing estimate (“Expected by now: …%”)
   - Milestone toasts at 25/50/75/100%
+- **Study log + daily analysis**
+  - Log study sessions (date + minutes + optional course + notes)
+  - Shows last 7/30 day totals + current streak
+  - “Run Daily Analysis” generates a coach message matching your style
+  - Auto-runs once per day when you open the page (after you click Start Tracking)
+  - Copy buttons for the GPT prompt + the message
 - **Local-first storage**
   - Everything saves to your browser via `localStorage`
   - Export/import JSON from the top bar
