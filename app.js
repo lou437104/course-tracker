@@ -268,11 +268,17 @@ function render() {
   const statCourses = document.getElementById("statCourses");
   const statOnTrack = document.getElementById("statOnTrack");
   const statBehind = document.getElementById("statBehind");
+  const banner = document.getElementById("accountabilityBanner");
+  const bannerMessage = document.getElementById("bannerMessage");
   const sessionCourseId = document.getElementById("sessionCourseId");
   const sessionSummary = document.getElementById("sessionSummary");
   const sessionList = document.getElementById("sessionList");
   const analysisMeta = document.getElementById("analysisMeta");
   const analysisOutput = document.getElementById("analysisOutput");
+  const overallSummary = document.getElementById("overallSummary");
+  const weeklyReport = document.getElementById("weeklyReport");
+  const paceAdjuster = document.getElementById("paceAdjuster");
+  const riskAlerts = document.getElementById("riskAlerts");
 
   const courses = state.courses || [];
   statCourses.textContent = String(courses.length);
@@ -287,8 +293,20 @@ function render() {
   statOnTrack.textContent = String(onTrack);
   statBehind.textContent = String(behind);
 
-  empty.classList.toggle("hidden", courses.length > 0);
+  const hasCourses = courses.length > 0;
+  empty.classList.toggle("hidden", hasCourses);
   list.innerHTML = "";
+
+  // Top banner uses the latest analysis / local message once tracking has started
+  if (banner && bannerMessage) {
+    if (state.startedAt) {
+      banner.classList.remove("hidden");
+      const msg = (state.lastAnalysisMessage || localDailyMessage(new Date())).split("\n")[0];
+      bannerMessage.textContent = msg;
+    } else {
+      banner.classList.add("hidden");
+    }
+  }
 
   if (sessionCourseId) {
     const selected = sessionCourseId.value;
@@ -345,10 +363,79 @@ function render() {
     analysisOutput.textContent = state.lastAnalysisMessage || "No analysis yet. Log a session or add course dates, then run.";
   }
 
+  // Overview + weekly report + pace adjuster
+  const stats = computeGlobalStats(new Date());
+  if (overallSummary) {
+    overallSummary.innerHTML = `
+      <div><b>Courses in progress:</b> ${stats.inProgressCount}</div>
+      <div><b>Courses completed:</b> ${stats.completedCount}</div>
+      <div><b>Current completion rate:</b> ${stats.completionRate}%</div>
+      <div><b>Study streak:</b> ${stats.streak} day(s)</div>
+      <div><b>Total hours this week:</b> ${stats.weekly.actualWeeklyHours.toFixed(1)}</div>
+    `;
+  }
+  if (weeklyReport) {
+    if (stats.weekly.plannedWeeklyHours > 0) {
+      weeklyReport.innerHTML = `
+        <div>Your plan: study ${stats.weekly.plannedWeeklyHours.toFixed(1)} hours this week</div>
+        <div>You did: ${stats.weekly.actualWeeklyHours.toFixed(1)} hours${stats.weekly.weeklyPct != null ? ` (${stats.weekly.weeklyPct}%)` : ""}</div>
+        <div>Status: ${stats.weekly.weeklyStatus}</div>
+        <div>Courses on track: ${stats.weekly.onTrackCount}/${stats.inProgressCount}</div>
+        <div>Courses at risk: ${stats.weekly.atRiskCount}/${stats.inProgressCount}</div>
+      `;
+    } else {
+      weeklyReport.textContent = "Set a realistic time dedication in your profile to track plan vs reality.";
+    }
+  }
+  if (paceAdjuster) {
+    const p = stats.pace;
+    if (p.suggestedDailyMinutes && p.actualDailyMinutes > 0) {
+      const stated = state.profile.timeDedication || "not set";
+      paceAdjuster.innerHTML = `
+        <div>Your plan isn't realistic. Let's fix it.</div>
+        <div>Current: "${escapeHtml(stated)}" (stated) vs. ~${fmtMinutes(p.actualDailyMinutes)} /day (actual).</div>
+        <div>Suggested: ${fmtMinutes(p.suggestedDailyMinutes)} /day (achievable based on history).</div>
+        <div class="ctaRow" style="margin-top:6px;">
+          <button id="btnAcceptPlan" class="btn btn--teal" type="button">Accept realistic plan</button>
+        </div>
+      `;
+    } else {
+      paceAdjuster.textContent = "Once you've logged a few weeks of study, we'll suggest a realistic daily plan.";
+    }
+  }
+
+  // Quit risk alerts
+  if (riskAlerts) {
+    riskAlerts.innerHTML = "";
+    const now = new Date();
+    const riskCourses = (courses || [])
+      .filter((c) => getCoursePercent(c) < 100)
+      .map((c) => ({ course: c, risk: quitRiskForCourse(c, now) }))
+      .filter((x) => x.risk.level === "high");
+    for (const { course, risk } of riskCourses.slice(0, 2)) {
+      const div = document.createElement("div");
+      div.className = "riskAlert";
+      div.innerHTML = `
+        <div class="riskAlert__title">⚠️ High quit risk detected</div>
+        <div class="riskAlert__body">
+          Course: <b>${escapeHtml(course.name)}</b><br />
+          Why: ${escapeHtml(risk.reason)}
+        </div>
+        <div class="riskAlert__actions">
+          <button class="btn btn--primary" type="button" data-action="riskRecommit" data-id="${course.id}">Recommit</button>
+          <button class="btn btn--ghost" type="button" data-action="riskPause" data-id="${course.id}">Pause</button>
+          <button class="btn btn--ghost btn--danger" type="button" data-action="riskDrop" data-id="${course.id}">Drop</button>
+        </div>
+      `;
+      riskAlerts.appendChild(div);
+    }
+  }
+
   for (const course of courses) {
     const pct = getCoursePercent(course);
     const s = statusFor(course);
     const expected = estimateExpectedPercent(course);
+    const pace = computeCoursePace(course, new Date());
 
     const card = document.createElement("div");
     card.className = "courseCard";
@@ -385,8 +472,36 @@ function render() {
 
     const pacingLine =
       expected == null
-        ? "Add a target date to get on-track pacing."
+        ? "Add a target date and total hours to get on-track pacing."
         : `Expected by now: ${Math.round(expected)}%`;
+
+    const lastForCourse = lastStudyDateForCourse(course.id);
+    const daysSinceCourse = lastForCourse ? daysBetween(parseDate(lastForCourse), new Date()) : null;
+
+    let statusLine = "";
+    if (pace.severity === "Severely behind") {
+      statusLine = `⚠️ ${pace.daysBehindSchedule || 0} days behind schedule`;
+    } else if (pace.severity === "Behind") {
+      statusLine = `⚠️ ${pace.daysBehindSchedule || 0} days behind schedule`;
+    } else if (pace.severity === "On track") {
+      statusLine = `✅ On track`;
+    } else if (pace.severity === "Ahead") {
+      statusLine = `🚀 Ahead of schedule`;
+    } else {
+      statusLine = "Set dates to get pacing insight";
+    }
+
+    const requiredLine =
+      pace.requiredHoursPerDay != null
+        ? `Need: ${fmtMinutes(pace.requiredHoursPerDay * 60)} /day to finish on time`
+        : "Need: set total hours + target date";
+    const actualLine = `Doing: ${fmtMinutes(pace.actualHoursPerDay7 * 60)} /day (last 7 days)`;
+
+    const compProb = pace.completionProbability != null ? Math.round(pace.completionProbability) : null;
+    const compTone =
+      compProb == null ? "" : compProb < 40 ? "pill--danger" : compProb < 70 ? "pill--warn" : "pill--teal";
+    const lastStudiedLine =
+      daysSinceCourse == null ? "Last studied: —" : `Last studied: ${daysSinceCourse === 0 ? "today" : `${daysSinceCourse} days ago`}`;
 
     card.innerHTML = `
       <div class="courseCard__top">
@@ -410,15 +525,35 @@ function render() {
       </div>
 
       <div class="progressBar" aria-label="Progress bar">
-        <div class="progressBar__fill" style="width:${pct.toFixed(1)}%"></div>
+        <div class="progressBar__fill ${pace.severity === "Severely behind" ? "progressBar__fill--danger" : pace.severity === "Behind" ? "progressBar__fill--warn" : ""}" style="width:${pct.toFixed(1)}%"></div>
       </div>
       <div class="muted small">${escapeHtml(pacingLine)}</div>
+
+      <div class="muted small">
+        ${escapeHtml(statusLine)}<br/>
+        ${escapeHtml(requiredLine)}<br/>
+        ${escapeHtml(actualLine)}<br/>
+        ${escapeHtml(lastStudiedLine)}
+      </div>
+
+      <div class="pillRow">
+        ${
+          compProb != null
+            ? `<span class="pill ${compTone}">Completion probability: ${compProb}%</span>`
+            : `<span class="pill">Completion probability: —</span>`
+        }
+      </div>
 
       <div class="courseActions">
         <div>
           ${url ? `<a class="link" href="${url}" target="_blank" rel="noopener noreferrer">Open course</a>` : `<span class="muted small">No URL set</span>`}
         </div>
-        <button class="btn btn--ghost" type="button" data-action="bump" data-id="${course.id}">+5%</button>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn--ghost" type="button" data-action="quickLog" data-id="${course.id}">I studied today</button>
+          <button class="btn btn--ghost" type="button" data-action="editDeadline" data-id="${course.id}">Adjust deadline</button>
+          <button class="btn btn--ghost" type="button" data-action="pauseCourse" data-id="${course.id}">Pause</button>
+          <button class="btn btn--ghost btn--danger" type="button" data-action="dropCourse" data-id="${course.id}">Drop</button>
+        </div>
       </div>
     `;
 
@@ -468,6 +603,7 @@ function normalizeSession(s) {
     minutes: Math.max(1, Math.round(Number(s.minutes) || 0)),
     courseId: s.courseId || "",
     notes: String(s.notes || "").trim(),
+    difficulty: s.difficulty || "",
     createdAt: s.createdAt || new Date().toISOString(),
   };
 }
@@ -497,6 +633,13 @@ function getStudyStreak(now = new Date()) {
 
 function lastStudyDate() {
   const all = (state.sessions || []).filter((s) => isValidDateStr(s.date));
+  if (!all.length) return null;
+  all.sort((a, b) => (a.date < b.date ? 1 : -1));
+  return all[0].date;
+}
+
+function lastStudyDateForCourse(courseId) {
+  const all = (state.sessions || []).filter((s) => s.courseId === courseId && isValidDateStr(s.date));
   if (!all.length) return null;
   all.sort((a, b) => (a.date < b.date ? 1 : -1));
   return all[0].date;
@@ -583,6 +726,109 @@ function computeCoursePace(course, now = new Date()) {
     daysBehindSchedule,
     severity,
   };
+}
+
+function computeGlobalStats(now = new Date()) {
+  const courses = (state.courses || []).filter((c) => !c.archived);
+  const inProgress = courses.filter((c) => {
+    const p = getCoursePercent(c);
+    return p > 0 && p < 100;
+  });
+  const completed = courses.filter((c) => getCoursePercent(c) >= 100);
+  const total = courses.length || 1;
+
+  const last7 = sessionsInLastDays(7, now);
+  const last30 = sessionsInLastDays(30, now);
+  const mins7 = last7.reduce((s, x) => s + (Number(x.minutes) || 0), 0);
+  const mins30 = last30.reduce((s, x) => s + (Number(x.minutes) || 0), 0);
+  const streak = getStudyStreak(now);
+
+  const completionRate = Math.round((completed.length / total) * 100);
+
+  // weekly plan from stated time dedication
+  const td = (state.profile.timeDedication || "").toLowerCase();
+  let plannedDailyMinutes = 0;
+  if (td.includes("15 min")) plannedDailyMinutes = 15;
+  else if (td.includes("30 min")) plannedDailyMinutes = 30;
+  else if (td.includes("1 hour")) plannedDailyMinutes = 60;
+  else if (td.includes("2+ hours")) plannedDailyMinutes = 120;
+  else if (td.includes("weekends")) plannedDailyMinutes = 45; // rough heuristic
+  const plannedWeeklyHours = (plannedDailyMinutes * 7) / 60;
+  const actualWeeklyHours = mins7 / 60;
+  const weeklyPct = plannedWeeklyHours > 0 ? Math.round((actualWeeklyHours / plannedWeeklyHours) * 100) : null;
+
+  let weeklyStatus = "No plan set";
+  if (plannedWeeklyHours > 0) {
+    if (weeklyPct >= 90) weeklyStatus = "On track";
+    else if (weeklyPct >= 60) weeklyStatus = "Slightly behind";
+    else weeklyStatus = "Behind";
+  }
+
+  const onTrackCount = inProgress.filter((c) => {
+    const p = computeCoursePace(c, now);
+    return p.severity === "On track" || p.severity === "Ahead";
+  }).length;
+  const atRiskCount = inProgress.length - onTrackCount;
+
+  // pace realism
+  const actualDailyMinutes = mins30 / 30;
+  let suggestedDailyMinutes = null;
+  if (actualDailyMinutes > 0) {
+    suggestedDailyMinutes = clamp(Math.round(actualDailyMinutes * 1.2), 10, 120);
+  }
+
+  return {
+    inProgressCount: inProgress.length,
+    completedCount: completed.length,
+    completionRate,
+    streak,
+    weekly: {
+      plannedWeeklyHours,
+      actualWeeklyHours,
+      weeklyPct,
+      weeklyStatus,
+      onTrackCount,
+      atRiskCount,
+    },
+    pace: {
+      plannedDailyMinutes,
+      actualDailyMinutes,
+      suggestedDailyMinutes,
+    },
+  };
+}
+
+function quitRiskForCourse(course, now = new Date()) {
+  const pct = getCoursePercent(course);
+  const last = lastStudyDateForCourse(course.id);
+  const lastAny = lastStudyDate();
+  const daysSinceCourse = last ? daysBetween(parseDate(last), now) : null;
+  const daysSinceAny = lastAny ? daysBetween(parseDate(lastAny), now) : null;
+  const pace = computeCoursePace(course, now);
+
+  let level = "low";
+  const reasons = [];
+
+  if ((daysSinceCourse ?? 0) >= 7) {
+    level = "medium";
+    reasons.push(`no study on this course in ${daysSinceCourse} days`);
+  }
+  if ((daysSinceAny ?? 0) >= 7) {
+    level = "medium";
+    reasons.push(`overall momentum fading (${daysSinceAny} days without studying)`);
+  }
+  if (pct >= 25 && pct <= 35) {
+    level = "high";
+    reasons.push("near the typical 30% quit point");
+  }
+  if (pace.severity === "Severely behind") {
+    level = "high";
+    reasons.push("severely behind schedule");
+  }
+
+  if (!reasons.length) return { level: "low", reason: "" };
+  const reason = reasons.join(", ");
+  return { level, reason };
 }
 
 function buildDailyPrompt(now = new Date()) {
@@ -806,6 +1052,7 @@ function init() {
   const tabModule = document.getElementById("tabModule");
   const sessionForm = document.getElementById("sessionForm");
   const btnAddSession = document.getElementById("btnAddSession");
+  const btnQuickLog = document.getElementById("btnQuickLog");
   const btnRunAnalysis = document.getElementById("btnRunAnalysis");
   const btnCopyPrompt = document.getElementById("btnCopyPrompt");
   const btnCopyMessage = document.getElementById("btnCopyMessage");
@@ -930,12 +1177,45 @@ function init() {
       minutes,
       courseId: sessionForm.sessionCourseId.value || "",
       notes: sessionForm.sessionNotes.value || "",
+      difficulty: sessionForm.sessionDifficulty.value || "",
     });
     state.sessions = [session, ...(state.sessions || [])].slice(0, 400);
     saveState();
     sessionForm.sessionMinutes.value = "";
     sessionForm.sessionNotes.value = "";
+    if (sessionForm.sessionDifficulty) sessionForm.sessionDifficulty.value = "";
     toast("Session logged.", "success");
+    render();
+  });
+
+  btnQuickLog?.addEventListener("click", () => {
+    const now = new Date();
+    const today = todayStr();
+    const activeCourses = (state.courses || []).filter((c) => getCoursePercent(c) < 100 && !c.archived);
+    // Prefer high priority, then medium, then low
+    const score = (c) =>
+      (c.priority || "").startsWith("High")
+        ? 3
+        : (c.priority || "") === "Medium"
+          ? 2
+          : 1;
+    activeCourses.sort((a, b) => score(b) - score(a));
+    const targetCourse = activeCourses[0] || null;
+
+    const session = normalizeSession({
+      date: today,
+      minutes: 30,
+      courseId: targetCourse?.id || "",
+      notes: targetCourse ? `Quick log: 30 min on ${targetCourse.name}` : "Quick log: 30 min study",
+      difficulty: "",
+    });
+
+    state.sessions = [session, ...(state.sessions || [])].slice(0, 400);
+    saveState();
+    toast(
+      targetCourse ? `Logged 30 min on “${escapeHtml(targetCourse.name)}”.` : "Logged a 30-minute study block.",
+      "success",
+    );
     render();
   });
 
@@ -947,6 +1227,33 @@ function init() {
     saveState();
     toast("Session removed.", "warn");
     render();
+  });
+
+  // Risk alert buttons (recommit / pause / drop)
+  document.getElementById("riskAlerts")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    const course = findCourse(id);
+    if (!course) return;
+    if (action === "riskRecommit") {
+      toast(`Recommitted to “${escapeHtml(course.name)}”. Plan one small session today.`, "success");
+      return;
+    }
+    if (action === "riskPause") {
+      course.paused = true;
+      saveState();
+      toast(`Paused “${escapeHtml(course.name)}”.`, "info");
+      render();
+      return;
+    }
+    if (action === "riskDrop") {
+      course.archived = true;
+      saveState();
+      toast(`Dropped “${escapeHtml(course.name)}”.`, "warn");
+      render();
+    }
   });
 
   btnRunAnalysis?.addEventListener("click", async () => {
@@ -974,6 +1281,22 @@ function init() {
   btnCopyPrompt?.addEventListener("click", () => copyToClipboard(state.lastAnalysisPrompt || buildDailyPrompt(new Date())));
   btnCopyMessage?.addEventListener("click", () => copyToClipboard(state.lastAnalysisMessage || localDailyMessage(new Date())));
 
+  // Accept realistic plan
+  document.addEventListener("click", (e) => {
+    const btnPlan = e.target.closest("#btnAcceptPlan");
+    if (btnPlan) {
+      const stats = computeGlobalStats(new Date());
+      const p = stats.pace;
+      if (!p.suggestedDailyMinutes) return;
+      const mins = p.suggestedDailyMinutes;
+      const label = mins >= 60 ? `${Math.round(mins / 60)} hour/day` : `${mins} min/day`;
+      state.profile.timeDedication = label;
+      saveState();
+      toast(`Updated plan to ${label}.`, "success");
+      render();
+    }
+  });
+
   // Auto-run once per day when the page is opened
   const today = todayStr();
   if (state.startedAt && state.lastAnalysisDate !== today) {
@@ -990,6 +1313,40 @@ function init() {
 
     if (action === "edit") {
       openCourseDialog(course);
+      return;
+    }
+    if (action === "quickLog") {
+      const session = normalizeSession({
+        date: todayStr(),
+        minutes: 30,
+        courseId: course.id,
+        notes: `Quick “I studied today” on ${course.name}`,
+        difficulty: "",
+      });
+      state.sessions = [session, ...(state.sessions || [])].slice(0, 400);
+      saveState();
+      toast(`Logged 30 min on “${escapeHtml(course.name)}”.`, "success");
+      render();
+      return;
+    }
+    if (action === "editDeadline") {
+      openCourseDialog(course);
+      const form = document.getElementById("courseForm");
+      if (form && form.targetDate) form.targetDate.focus();
+      return;
+    }
+    if (action === "pauseCourse") {
+      course.paused = !course.paused;
+      toast(course.paused ? `Paused “${escapeHtml(course.name)}”.` : `Resumed “${escapeHtml(course.name)}”.`, "info");
+      saveState();
+      render();
+      return;
+    }
+    if (action === "dropCourse") {
+      course.archived = true;
+      toast(`Dropped “${escapeHtml(course.name)}”.`, "warn");
+      saveState();
+      render();
       return;
     }
     if (action === "bump") {

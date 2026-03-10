@@ -77,6 +77,38 @@ body{
   gap: 18px;
   margin: 22px 0 18px;
 }
+
+.banner{
+  margin-top: 14px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: radial-gradient(600px 280px at 0% 0%, rgba(39,215,192,0.25), transparent 60%), rgba(7,11,20,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+.banner__main{ display:grid; gap:4px; min-width: 0; }
+.banner__label{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.65);
+}
+.banner__message{
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.banner__actions{
+  display:flex;
+  gap:8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 .hero__copy{
   padding: 18px 18px 18px 18px;
   background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
@@ -285,6 +317,33 @@ label.file input{ display:none; }
   margin-top: 12px;
 }
 
+.overviewRow{
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+.overviewCard{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(5,10,20,0.78);
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+.overviewCard__title{
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.70);
+}
+.overviewCard__body{
+  color: rgba(255,255,255,0.92);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .subgrid{
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
@@ -336,6 +395,38 @@ label.file input{ display:none; }
   min-height: 140px;
   white-space: pre-wrap;
   line-height: 1.45;
+}
+
+.riskAlerts{
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.riskAlert{
+  border-radius: 14px;
+  border: 1px solid rgba(255,77,95,0.50);
+  background: radial-gradient(400px 220px at 0% 0%, rgba(255,77,95,0.22), transparent 60%), rgba(20,6,12,0.94);
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+.riskAlert__title{
+  font-size: 13px;
+  font-weight: 700;
+}
+.riskAlert__body{
+  font-size: 12px;
+  color: rgba(255,200,205,0.90);
+}
+.riskAlert__actions{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.riskAlert__actions .btn{
+  padding: 6px 9px;
+  font-size: 12px;
+  border-radius: 999px;
 }
 
 .courseCard{
@@ -392,6 +483,12 @@ label.file input{ display:none; }
   background: linear-gradient(90deg, var(--teal) 0%, var(--orange) 65%, var(--orange2) 100%);
   border-radius: 999px;
   transition: width 220ms ease;
+}
+.progressBar__fill--warn{
+  background: linear-gradient(90deg, var(--warn) 0%, var(--orange) 60%, var(--orange2) 100%);
+}
+.progressBar__fill--danger{
+  background: linear-gradient(90deg, var(--danger) 0%, #ff6b81 60%, #ffb3c0 100%);
 }
 .courseActions{
   display:flex;
@@ -501,6 +598,7 @@ label.file input{ display:none; }
   .hero{ grid-template-columns: 1fr; }
   .grid{ grid-template-columns: 1fr; }
   .checks{ grid-template-columns: 1fr 1fr; }
+   .overviewRow{ grid-template-columns: 1fr; }
   .subgrid{ grid-template-columns: 1fr; }
   .courseList{ grid-template-columns: 1fr; }
 }

@@ -36,6 +36,18 @@
     </header>
 
     <main class="container">
+      <section id="accountabilityBanner" class="banner hidden" aria-live="polite">
+        <div class="banner__main">
+          <div class="banner__label">Today's accountability</div>
+          <div id="bannerMessage" class="banner__message">
+            Set your profile and run the daily analysis to get a focused plan for today.
+          </div>
+        </div>
+        <div class="banner__actions">
+          <button id="btnBannerStudied" class="btn btn--primary" type="button">I studied today</button>
+          <button id="btnBannerLog" class="btn btn--ghost" type="button">Log session</button>
+        </div>
+      </section>
       <section class="hero">
         <div class="hero__copy">
           <h1 class="h1">A smarter way to stay consistent.</h1>
@@ -206,6 +218,27 @@
           <button id="btnAddCourse" class="btn btn--teal" type="button">Add Course</button>
         </div>
 
+        <section id="overviewRow" class="overviewRow">
+          <div class="overviewCard">
+            <div class="overviewCard__title">Overall progress</div>
+            <div id="overallSummary" class="overviewCard__body small muted">
+              Add a course and log a session to see your dashboard.
+            </div>
+          </div>
+          <div class="overviewCard">
+            <div class="overviewCard__title">This week</div>
+            <div id="weeklyReport" class="overviewCard__body small muted">
+              Your weekly report card appears here once you start studying.
+            </div>
+          </div>
+          <div class="overviewCard">
+            <div class="overviewCard__title">Pace adjuster</div>
+            <div id="paceAdjuster" class="overviewCard__body small muted">
+              Once we see your real pace, we'll suggest a more realistic daily plan.
+            </div>
+          </div>
+        </section>
+
         <div class="subgrid">
           <section class="subcard">
             <div class="subcard__header">
@@ -230,12 +263,26 @@
                 </select>
               </div>
               <div class="field">
-                <label for="sessionNotes">Notes (optional)</label>
-                <input id="sessionNotes" name="sessionNotes" type="text" placeholder="e.g., Finished lesson 3, took notes" />
+                <label for="sessionNotes">What you completed (optional)</label>
+                <textarea
+                  id="sessionNotes"
+                  name="sessionNotes"
+                  rows="2"
+                  placeholder="e.g., Finished lesson 3, took notes"
+                ></textarea>
+              </div>
+              <div class="field">
+                <label for="sessionDifficulty">How difficult was it?</label>
+                <select id="sessionDifficulty" name="sessionDifficulty">
+                  <option value="">Select…</option>
+                  <option>Easy</option>
+                  <option>Medium</option>
+                  <option>Hard</option>
+                </select>
               </div>
               <div class="ctaRow">
                 <button id="btnAddSession" class="btn btn--teal" type="button">Log session</button>
-                <div class="muted small">Last 7 days + streaks power the analysis.</div>
+                <button id="btnQuickLog" class="btn btn--ghost" type="button">Quick log: 30 min</button>
               </div>
             </form>
 
@@ -263,6 +310,8 @@
             </div>
           </section>
         </div>
+
+        <div id="riskAlerts" class="riskAlerts"></div>
 
         <div id="emptyCourses" class="empty">
           <div class="empty__title">No courses yet.</div>
