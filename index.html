@@ -173,6 +173,20 @@
               </select>
             </div>
 
+            <div class="field">
+              <label for="openAiKey">OpenAI API key (optional, for auto analysis)</label>
+              <input
+                id="openAiKey"
+                name="openAiKey"
+                type="password"
+                placeholder="sk-…"
+                autocomplete="off"
+              />
+              <div class="muted small">
+                Stored only in your browser. If blank, the app will generate a ready-to-copy prompt instead.
+              </div>
+            </div>
+
             <div class="ctaRow">
               <button id="btnStartTracking" class="btn btn--primary btn--big" type="button">
                 Start Tracking
@@ -190,6 +204,64 @@
             <p class="muted">Add what you’re enrolled in, then keep progress honest.</p>
           </div>
           <button id="btnAddCourse" class="btn btn--teal" type="button">Add Course</button>
+        </div>
+
+        <div class="subgrid">
+          <section class="subcard">
+            <div class="subcard__header">
+              <div class="h2">Study log</div>
+              <div class="muted small">Log minutes (quick), then let the daily coach run.</div>
+            </div>
+            <form id="sessionForm" class="form" autocomplete="off">
+              <div class="field field--row">
+                <div class="field">
+                  <label for="sessionDate">Date</label>
+                  <input id="sessionDate" name="sessionDate" type="date" />
+                </div>
+                <div class="field">
+                  <label for="sessionMinutes">Study minutes</label>
+                  <input id="sessionMinutes" name="sessionMinutes" type="number" min="1" step="1" placeholder="e.g., 30" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="sessionCourseId">Course (optional)</label>
+                <select id="sessionCourseId" name="sessionCourseId">
+                  <option value="">Any / general studying</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="sessionNotes">Notes (optional)</label>
+                <input id="sessionNotes" name="sessionNotes" type="text" placeholder="e.g., Finished lesson 3, took notes" />
+              </div>
+              <div class="ctaRow">
+                <button id="btnAddSession" class="btn btn--teal" type="button">Log session</button>
+                <div class="muted small">Last 7 days + streaks power the analysis.</div>
+              </div>
+            </form>
+
+            <div id="sessionSummary" class="summary"></div>
+            <div id="sessionList" class="sessionList" aria-live="polite"></div>
+          </section>
+
+          <section class="subcard">
+            <div class="subcard__header">
+              <div class="h2">Daily analysis</div>
+              <div class="muted small">Generates today’s message + pacing per course.</div>
+            </div>
+
+            <div class="ctaRow">
+              <button id="btnRunAnalysis" class="btn btn--primary" type="button">Run Daily Analysis</button>
+              <div id="analysisMeta" class="muted small" aria-live="polite"></div>
+            </div>
+
+            <div id="analysisOutput" class="analysisOutput">
+              <div class="muted small">No analysis yet. Log a session or add course dates, then run.</div>
+            </div>
+            <div class="ctaRow">
+              <button id="btnCopyPrompt" class="btn btn--ghost" type="button">Copy GPT prompt</button>
+              <button id="btnCopyMessage" class="btn btn--ghost" type="button">Copy message</button>
+            </div>
+          </section>
         </div>
 
         <div id="emptyCourses" class="empty">

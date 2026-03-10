@@ -285,6 +285,59 @@ label.file input{ display:none; }
   margin-top: 12px;
 }
 
+.subgrid{
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.subcard{
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.subcard__header{ display: grid; gap: 4px; }
+
+.summary{
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.80);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.summary b{ color: rgba(255,255,255,0.95); }
+
+.sessionList{ display: grid; gap: 8px; }
+.sessionRow{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+}
+.sessionRow__main{ display: grid; gap: 2px; }
+.sessionRow__title{ font-weight: 700; letter-spacing: -0.02em; font-size: 13px; }
+.sessionRow__meta{ color: rgba(255,255,255,0.68); font-size: 12px; }
+
+.analysisOutput{
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 12px 12px;
+  background: rgba(7,11,20,0.35);
+  min-height: 140px;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
 .courseCard{
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
@@ -448,6 +501,7 @@ label.file input{ display:none; }
   .hero{ grid-template-columns: 1fr; }
   .grid{ grid-template-columns: 1fr; }
   .checks{ grid-template-columns: 1fr 1fr; }
+  .subgrid{ grid-template-columns: 1fr; }
   .courseList{ grid-template-columns: 1fr; }
 }
 @media (max-width: 520px){
