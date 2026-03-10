@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Course Accountability Tracker</title>
+    <meta name="description" content="Track courses, stay accountable, and hit your completion dates." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true"></div>
+          <div class="brand__text">
+            <div class="brand__title">Course Accountability Tracker</div>
+            <div class="brand__subtitle">Finish what you started.</div>
+          </div>
+        </div>
+
+        <div class="topbar__actions">
+          <button id="btnExport" class="btn btn--ghost" type="button">Export</button>
+          <label class="btn btn--ghost file">
+            Import
+            <input id="fileImport" type="file" accept="application/json" />
+          </label>
+          <button id="btnReset" class="btn btn--ghost btn--danger" type="button">Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero__copy">
+          <h1 class="h1">A smarter way to stay consistent.</h1>
+          <p class="lead">
+            Set your goal, add courses, and track progress with on-track insights, milestones, and
+            gentle (or tough) accountability.
+          </p>
+        </div>
+        <div class="hero__stats" aria-label="High level stats">
+          <div class="stat">
+            <div class="stat__label">Courses</div>
+            <div id="statCourses" class="stat__value">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">On track</div>
+            <div id="statOnTrack" class="stat__value">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Behind</div>
+            <div id="statBehind" class="stat__value">0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <section class="card">
+          <div class="card__header">
+            <h2 class="h2">User profile</h2>
+            <p class="muted">A little context helps your tracker keep you honest.</p>
+          </div>
+
+          <form id="profileForm" class="form" autocomplete="off">
+            <div class="field">
+              <label for="learningGoal">What's your learning goal?</label>
+              <textarea
+                id="learningGoal"
+                name="learningGoal"
+                rows="3"
+                placeholder="Career change, skill building, hobby, certification…"
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label for="timeDedication">How much time can you realistically dedicate?</label>
+              <select id="timeDedication" name="timeDedication">
+                <option value="">Select…</option>
+                <option>15 min/day</option>
+                <option>30 min/day</option>
+                <option>1 hour/day</option>
+                <option>2+ hours/day</option>
+                <option>Weekends only</option>
+                <option>Varies</option>
+              </select>
+            </div>
+
+            <fieldset class="fieldset">
+              <legend>Best time to study</legend>
+              <div class="checks">
+                <label class="check"><input type="checkbox" name="bestTime" value="Morning" />Morning</label>
+                <label class="check"><input type="checkbox" name="bestTime" value="Lunch break" />Lunch break</label>
+                <label class="check"><input type="checkbox" name="bestTime" value="Evening" />Evening</label>
+                <label class="check"><input type="checkbox" name="bestTime" value="Night" />Night</label>
+                <label class="check"><input type="checkbox" name="bestTime" value="Weekends" />Weekends</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>What makes you quit courses?</legend>
+              <div class="checks checks--two">
+                <label class="check"><input type="checkbox" name="quitReasons" value="Too busy" />Too busy</label>
+                <label class="check"><input type="checkbox" name="quitReasons" value="Lose motivation" />Lose motivation</label>
+                <label class="check"><input type="checkbox" name="quitReasons" value="Course too hard" />Course too hard</label>
+                <label class="check"><input type="checkbox" name="quitReasons" value="Course too boring" />Course too boring</label>
+                <label class="check"><input type="checkbox" name="quitReasons" value="Forget about it" />Forget about it</label>
+                <label class="check"><input type="checkbox" name="quitReasons" value="Get distracted by new courses" />Get distracted by new courses</label>
+              </div>
+            </fieldset>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card__header">
+            <h2 class="h2">Accountability preferences</h2>
+            <p class="muted">Choose the kind of nudges you’ll actually respond to.</p>
+          </div>
+
+          <form id="prefsForm" class="form" autocomplete="off">
+            <fieldset class="fieldset">
+              <legend>How do you want to be held accountable?</legend>
+              <div class="checks checks--two">
+                <label class="check"><input type="checkbox" name="accountability" value="Daily reminders" />Daily reminders</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Weekly progress check-ins" />Weekly progress check-ins</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Motivation when falling behind" />Motivation when falling behind</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Celebration when hitting milestones" />Celebration when hitting milestones</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Tough love (direct, no sugar-coating)" />Tough love (direct, no sugar-coating)</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Gentle encouragement" />Gentle encouragement</label>
+                <label class="check"><input type="checkbox" name="accountability" value="Data-driven insights" />Data-driven insights</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>Reminder method</legend>
+              <div class="checks">
+                <label class="check"><input type="checkbox" name="reminderMethod" value="Email" />Email</label>
+                <label class="check"><input type="checkbox" name="reminderMethod" value="SMS" />SMS</label>
+                <label class="check"><input type="checkbox" name="reminderMethod" value="Push notification" />Push notification</label>
+                <label class="check"><input type="checkbox" name="reminderMethod" value="Slack" />Slack</label>
+                <label class="check"><input type="checkbox" name="reminderMethod" value="Discord" />Discord</label>
+              </div>
+            </fieldset>
+
+            <div class="field field--row">
+              <div class="field">
+                <label for="remindAt">When to remind me</label>
+                <input id="remindAt" name="remindAt" type="time" />
+              </div>
+
+              <div class="field field--toggle">
+                <label for="weekendsToo">Remind me even on weekends?</label>
+                <div class="toggle">
+                  <input id="weekendsToo" name="weekendsToo" type="checkbox" />
+                  <span class="toggle__ui" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="loggingMethod">How will you log progress?</label>
+              <select id="loggingMethod" name="loggingMethod">
+                <option value="">Select…</option>
+                <option>Manual check-in (I'll tell you what I completed)</option>
+                <option>Daily time tracking (log study minutes)</option>
+                <option>Module/lesson completion (check off lessons)</option>
+                <option>Auto-sync (if platform integration available)</option>
+              </select>
+            </div>
+
+            <div class="ctaRow">
+              <button id="btnStartTracking" class="btn btn--primary btn--big" type="button">
+                Start Tracking
+              </button>
+              <div id="startHint" class="muted small" aria-live="polite"></div>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section class="card">
+        <div class="card__header card__header--row">
+          <div>
+            <h2 class="h2">Courses you're taking</h2>
+            <p class="muted">Add what you’re enrolled in, then keep progress honest.</p>
+          </div>
+          <button id="btnAddCourse" class="btn btn--teal" type="button">Add Course</button>
+        </div>
+
+        <div id="emptyCourses" class="empty">
+          <div class="empty__title">No courses yet.</div>
+          <div class="empty__copy">Add your first course and make it real.</div>
+        </div>
+
+        <div id="courseList" class="courseList" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <dialog id="courseDialog" class="dialog">
+      <form id="courseForm" method="dialog" class="dialog__panel">
+        <div class="dialog__header">
+          <div>
+            <div id="courseDialogTitle" class="dialog__title">Add course</div>
+            <div class="muted small">You can edit this later anytime.</div>
+          </div>
+          <button class="iconBtn" value="cancel" aria-label="Close dialog" type="submit">✕</button>
+        </div>
+
+        <div class="dialog__body">
+          <div class="field">
+            <label for="courseName">Course name</label>
+            <input id="courseName" name="courseName" type="text" placeholder="e.g., React Fundamentals" required />
+          </div>
+
+          <div class="field field--row">
+            <div class="field">
+              <label for="platform">Platform</label>
+              <select id="platform" name="platform" required>
+                <option value="">Select…</option>
+                <option>Coursera</option>
+                <option>Udemy</option>
+                <option>Skillshare</option>
+                <option>LinkedIn Learning</option>
+                <option>Pluralsight</option>
+                <option>edX</option>
+                <option>YouTube playlist</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="priority">Priority</label>
+              <select id="priority" name="priority" required>
+                <option value="">Select…</option>
+                <option>High (need ASAP)</option>
+                <option>Medium</option>
+                <option>Low (nice to have)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="courseUrl">Course URL (optional)</label>
+            <input id="courseUrl" name="courseUrl" type="url" placeholder="https://…" />
+          </div>
+
+          <div class="field field--row">
+            <div class="field">
+              <label for="totalDuration">Total duration (hours or weeks)</label>
+              <input id="totalDuration" name="totalDuration" type="text" placeholder="e.g., 12 hours / 4 weeks" />
+            </div>
+            <div class="field">
+              <label for="why">Why you're taking this</label>
+              <select id="why" name="why" required>
+                <option value="">Select…</option>
+                <option>Career</option>
+                <option>Personal interest</option>
+                <option>Certification needed</option>
+                <option>Boss assigned</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field field--row">
+            <div class="field">
+              <label for="startDate">Start date (when you enrolled)</label>
+              <input id="startDate" name="startDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="targetDate">Target completion date</label>
+              <input id="targetDate" name="targetDate" type="date" />
+            </div>
+          </div>
+
+          <fieldset class="fieldset">
+            <legend>Current progress</legend>
+            <div class="segmented" role="tablist" aria-label="Progress input mode">
+              <button id="tabPercent" class="segmented__btn" type="button" aria-selected="true">Percent</button>
+              <button id="tabModule" class="segmented__btn" type="button" aria-selected="false">Modules</button>
+            </div>
+
+            <div id="progressPercentWrap" class="field field--row">
+              <div class="field">
+                <label for="progressPercent">Percent complete</label>
+                <input id="progressPercent" name="progressPercent" type="number" min="0" max="100" step="1" value="0" />
+              </div>
+              <div class="field">
+                <label for="milestoneNotes">Milestone note (optional)</label>
+                <input id="milestoneNotes" name="milestoneNotes" type="text" placeholder="e.g., Finished Section 1" />
+              </div>
+            </div>
+
+            <div id="progressModuleWrap" class="field field--row hidden">
+              <div class="field">
+                <label for="moduleCurrent">Module</label>
+                <input id="moduleCurrent" name="moduleCurrent" type="number" min="0" step="1" value="0" />
+              </div>
+              <div class="field">
+                <label for="moduleTotal">of</label>
+                <input id="moduleTotal" name="moduleTotal" type="number" min="0" step="1" value="0" />
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="dialog__footer">
+          <button id="btnDeleteCourse" class="btn btn--ghost btn--danger hidden" type="button">
+            Delete
+          </button>
+          <div class="spacer"></div>
+          <button class="btn btn--ghost" value="cancel" type="submit">Cancel</button>
+          <button id="btnSaveCourse" class="btn btn--primary" value="default" type="submit">
+            Save course
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
+
